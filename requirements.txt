@@ -1,3 +1,8 @@
+scikit-learn
+pylab
+scipy
+pandas
+numpy
 # =============================================================================
 # DEPRECATION WARNING:
 #
