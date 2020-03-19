@@ -1,8 +1,8 @@
 scikit-learn
-pylab
 scipy
 pandas
 numpy
+matplotlib
 # =============================================================================
 # DEPRECATION WARNING:
 #
