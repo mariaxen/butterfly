@@ -126,9 +126,44 @@ class DeepInsight(torch.nn.Module):
 
 if __name__ == '__main__':
     X = torch.tensor(np.random.random((40, 40))).reshape(1, 1, 40, 40).float()
+    y = np.random.choice([0, 1], 1)
 
     m = DeepInsight(input_dim=X.shape[2:])
     m.forward(X)
+
+    import h5py
+    file = h5py.File('../../../external/DeepInsight/Data/dataset2.mat', "r")
+    print(file["dset"]["Xtest"][...].shape)
+
+    import torch.optim as optim
+
+    criterion = torch.nn.CrossEntropyLoss()
+    optimizer = optim.SGD(m.parameters(), lr=0.001, momentum=0.9)
+
+    for epoch in range(2):  # loop over the dataset multiple times
+
+        running_loss = 0.0
+        for i, data in enumerate(zip(X, y)):
+            # get the inputs; data is a list of [inputs, labels]
+            inputs, labels = data
+
+            # zero the parameter gradients
+            optimizer.zero_grad()
+
+            # forward + backward + optimize
+            outputs = m(inputs)
+            loss = criterion(outputs, labels)
+            loss.backward()
+            optimizer.step()
+
+            # print statistics
+            running_loss += loss.item()
+            if i % 2000 == 1999:  # print every 2000 mini-batches
+                print('[%d, %5d] loss: %.3f' %
+                      (epoch + 1, i + 1, running_loss / 2000))
+                running_loss = 0.0
+
+    print('Finished Training')
 
     # lp = torch.nn.ZeroPad2d(padding=(1,0,0,0))
     # lc = torch.nn.Conv2d(1, 1, kernel_size=1, stride=1, padding=0)
