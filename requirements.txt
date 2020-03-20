@@ -1,8 +1,9 @@
 scikit-learn
-pylab
 scipy
 pandas
 numpy
+matplotlib
+torch
 # =============================================================================
 # DEPRECATION WARNING:
 #
