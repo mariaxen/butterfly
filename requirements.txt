@@ -3,6 +3,7 @@ scipy
 pandas
 numpy
 matplotlib
+torch
 # =============================================================================
 # DEPRECATION WARNING:
 #
