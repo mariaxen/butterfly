@@ -102,7 +102,7 @@ class DeepInsight(torch.nn.Module):
         self.fc = torch.nn.Linear(
             int(8 * ((input_dim[0] / 8) // 2) * ((input_dim[1] / 8) // 2)),
             n_classes)
-        self.softmax = torch.nn.Softmax(dim=n_classes)
+        self.softmax = torch.nn.Softmax(dim=1)
 
     def forward(self, x):
 
@@ -118,18 +118,20 @@ class DeepInsight(torch.nn.Module):
 
         x3 = x1 + x2
         x3 = self.avg(x3)  # TODO: not padded!!! Might loose information here
-        x3 = self.fc(x3.reshape(x.shape[0], x.shape[1], -1))
+        x3 = self.fc(x3.reshape(x.shape[0], -1))
         x3 = self.softmax(x3)
 
         return x3
 
 
 if __name__ == '__main__':
-    X = torch.tensor(np.random.random((40, 40))).reshape(1, 1, 40, 40).float()
-    y = np.random.choice([0, 1], 1)
+
+    X = torch.tensor(np.random.random((10, 40, 40))).reshape(-1, 1, 40, 40).float()
+    y = np.random.choice([False, True], 10).reshape(-1, 1)
+    y = torch.tensor(np.concatenate([y], axis=1)).long().flatten()
+    print(y)
 
     m = DeepInsight(input_dim=X.shape[2:])
-    m.forward(X)
 
     import h5py
     file = h5py.File('../../../external/DeepInsight/Data/dataset2.mat', "r")
@@ -145,7 +147,7 @@ if __name__ == '__main__':
         running_loss = 0.0
         for i, data in enumerate(zip(X, y)):
             # get the inputs; data is a list of [inputs, labels]
-            inputs, labels = data
+            inputs, labels = X, y
 
             # zero the parameter gradients
             optimizer.zero_grad()
@@ -168,5 +170,5 @@ if __name__ == '__main__':
     # lp = torch.nn.ZeroPad2d(padding=(1,0,0,0))
     # lc = torch.nn.Conv2d(1, 1, kernel_size=1, stride=1, padding=0)
     # lb = torch.nn.BatchNorm2d(1)
-    # x = lb.forward(lc.forward(lp.forward(x)))
+    # x = lb.forward(lc.forward(lp.forward(X)))
     # print(x.shape)
