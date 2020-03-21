@@ -100,7 +100,6 @@ def minimum_bounding_rectangle(points):
 
     return rval
 
-
 # name_of_omic = 'plasma_s'
 # pix_size = 40
 def create_album(DF, name_of_omic, pix_size):
@@ -125,7 +124,7 @@ def create_album(DF, name_of_omic, pix_size):
     omics_df = pd.DataFrame(StandardScaler().fit_transform(omics_df))
 
     # omics_df = np.log(omics_df)
-    pca = TSNE(perplexity=60)
+    pca = TSNE(perplexity=25)
     principalComponents = pca.fit_transform(omics_df)
     principalDf = pd.DataFrame(data=principalComponents,
                                columns=['principal.component.1',
