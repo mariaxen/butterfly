@@ -12,7 +12,9 @@ from keras.models import Sequential
 from keras.layers import Dense
 from keras.layers import Flatten
 from keras.layers.convolutional import Conv1D
+from keras.layers.convolutional import Conv2D
 from keras.layers.convolutional import MaxPooling1D
+from keras.layers import *    
 import os 
 import pyreadr
 import numpy as np
@@ -34,7 +36,7 @@ def split_sequence(sequence, n_steps):
 		y.append(seq_y)
 	return array(X), array(y)
 
-def model(response_df, exclude, cv, album, pixels):
+def model(response_df, exclude, cv, album, pixels, features):
     
     yy = response_df.drop(['patientID', 'trimester'], axis =1 ).values
     
@@ -44,12 +46,12 @@ def model(response_df, exclude, cv, album, pixels):
     ptex = pt1ex+pt2ex
 
     #Divide in calibration and validation
-    X_c = np.delete(XX, ptex, 0)
+    X_c = np.delete(album, ptex, 0)
     X_c = X_c.reshape((X_c.shape[0], X_c.shape[1], pixels))
     y_c = np.delete(yy, ptex, 0)
     y_c = pd.DataFrame(StandardScaler().fit_transform(y_c))
 
-    X_v = np.asarray([XX[i]  for i in ptex])
+    X_v = np.asarray([album[i]  for i in ptex])
     X_v = X_v.reshape((X_v.shape[0], X_v.shape[1], pixels))
     y_v = np.asarray([yy[i] for i in ptex])
     y_v = pd.DataFrame(StandardScaler().fit_transform(y_v))
@@ -72,12 +74,10 @@ def model(response_df, exclude, cv, album, pixels):
     # demonstrate prediction
     y_pred = model.predict(X_v, verbose = 0)
     y_pred = pd.DataFrame(y_pred)
-    prediction.append(y_pred)
-    observed.append(y_v)
         
-    return prediction, observed
+    return y_pred, y_v
 
-def model_multi(response_df, exclude, cv, album, pixels):
+def model_multi(response_df, exclude, cv, album, pixels, features):
     
     yy = response_df.drop(['patientID', 'trimester'], axis =1 ).values
 
@@ -88,7 +88,7 @@ def model_multi(response_df, exclude, cv, album, pixels):
 
     X_c = []
     X_v = []
-    
+        
     #Divide in calibration and validation
     for i in range(6):
         X_cN = np.delete(album[i], ptex, 0)
@@ -114,10 +114,10 @@ def model_multi(response_df, exclude, cv, album, pixels):
     y_v = np.asarray([yy[i] for i in ptex])
     y_v = pd.DataFrame(StandardScaler().fit_transform(y_v))
     
-    X_v = []
+    X_vv = []
 
     for i in range(8):
-        X_v.append(np.array((X_v[0][i], X_v[1][i], X_v[2][i], X_v[3][i], X_v[4][i], 
+        X_vv.append(np.array((X_v[0][i], X_v[1][i], X_v[2][i], X_v[3][i], X_v[4][i], 
                              X_v[5][i]), dtype=float))
     
     X_vv = np.array(X_vv)
@@ -136,12 +136,10 @@ def model_multi(response_df, exclude, cv, album, pixels):
     model.add(Activation( 'sigmoid'))
     model.compile(optimizer='adam', loss='mse')
 
-    model.fit(X_c, y_c, epochs=300, verbose=0)
+    model.fit(X_cc, y_c, epochs=300, verbose=0)
 
     # demonstrate prediction
-    y_pred = model.predict(X_v, verbose = 0)
+    y_pred = model.predict(X_vv, verbose = 0)
     y_pred = pd.DataFrame(y_pred)
-    prediction.append(y_pred)
-    observed.append(y_v)
 	
-    return prediction, observed
+    return y_pred, y_v
