@@ -57,16 +57,24 @@ def model(response_df, exclude, cv, album, pixels, features):
     y_v = pd.DataFrame(StandardScaler().fit_transform(y_v))
     
     #Create your CNN
+#    model = Sequential()
+#    model.add(Conv1D(32,(3), input_shape=(pixels, pixels)))
+#    model.add(Activation('relu'))
+#    model.add(MaxPooling1D(pool_size=(2)))
+#    model.add(Flatten())
+#    model.add(Dense(50))
+#    model.add(Dropout(0.2))
+#    model.add(Activation('relu'))
+#    model.add(Dense(features))
+#    model.add(Activation( 'sigmoid'))
+#    model.compile(optimizer='adam', loss='mse')
+    
     model = Sequential()
-    model.add(Conv1D(32,(3), input_shape=(pixels, pixels)))
-    model.add(Activation('relu'))
-    model.add(MaxPooling1D(pool_size=(2)))
+    model.add(Conv1D(filters=64, kernel_size=2, activation='relu', input_shape=(pixels, pixels)))
+    model.add(MaxPooling1D(pool_size=2))
     model.add(Flatten())
-    model.add(Dense(50))
-    model.add(Dropout(0.2))
-    model.add(Activation('relu'))
+    model.add(Dense(50, activation='relu'))
     model.add(Dense(features))
-    model.add(Activation( 'sigmoid'))
     model.compile(optimizer='adam', loss='mse')
 
     model.fit(X_c, y_c, epochs=300, verbose=0)
@@ -141,5 +149,6 @@ def model_multi(response_df, exclude, cv, album, pixels, features):
     # demonstrate prediction
     y_pred = model.predict(X_vv, verbose = 0)
     y_pred = pd.DataFrame(y_pred)
-	
+
     return y_pred, y_v
+
