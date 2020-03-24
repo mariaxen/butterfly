@@ -2,6 +2,7 @@ import joblib
 import numpy as np
 from scipy.spatial import ConvexHull
 import sklearn.manifold
+import torch.utils.data
 
 
 def Rotate2D(pts, cnt, ang=np.pi / 4):
@@ -147,11 +148,24 @@ class AlbumTransformer(sklearn.base.BaseEstimator, sklearn.base.TransformerMixin
     def transform(self, X):
         return AlbumTransformer._transform(X, self.size_, self.feature_idx_, self.layers_)
 
+
+class AlbumDataset(torch.utils.data.Dataset):
+
+    def __init__(self, album, labels):
+        self.album = torch.tensor(album).float()
+        self.labels = torch.tensor(labels).long()
+
+    def __getitem__(self, item):
+        return self.album[item], self.labels[item]
+
+    def __len__(self):
+        return self.album.shape[0]
+
 #
 # def create_album(data, size, embedding=None, layers=None):
 #     """
 #     Create your album that contains all the pictures you are training on
-#     """
+#     """tesnor
 #
 #     if isinstance(size, int):
 #         size = (size, size)

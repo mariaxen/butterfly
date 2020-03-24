@@ -148,6 +148,7 @@ if __name__ == '__main__':
         for i, data in enumerate(zip(X, y)):
             # get the inputs; data is a list of [inputs, labels]
             inputs, labels = X, y
+            print(labels.dtype)
 
             # zero the parameter gradients
             optimizer.zero_grad()
