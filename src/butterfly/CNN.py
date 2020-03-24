@@ -151,4 +151,3 @@ def model_multi(response_df, exclude, cv, album, pixels, features):
     y_pred = pd.DataFrame(y_pred)
 
     return y_pred, y_v
-
