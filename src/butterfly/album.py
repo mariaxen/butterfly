@@ -119,10 +119,13 @@ def create_album(DF, name_of_omic, pix_size):
 
     # Select and prepare your chosen omics
     omic = [col for col in DF if col.startswith(name_of_omic)]
+    omic.append("patientID")
     omics_df = DF[omic]
     omics_df = omics_df.transpose()
+    patient_IDs = omics_df.iloc[omics_df.shape[0]-1]
+    omics_df = omics_df.drop(omics_df.index[omics_df.shape[0]-1])
     omics_df = pd.DataFrame(StandardScaler().fit_transform(omics_df))
-
+    
     # omics_df = np.log(omics_df)
     pca = TSNE(perplexity=25)
     principalComponents = pca.fit_transform(omics_df)
@@ -198,5 +201,5 @@ def create_album(DF, name_of_omic, pix_size):
         #    pic = pic.flatten()
         album.append(pic)
 
-    return album
+    return album, patient_IDs
     # plot_im = plt.imshow(pic, cmap = 'RdGy')

@@ -20,6 +20,7 @@ import pyreadr
 import numpy as np
 import pandas as pd
 from sklearn.preprocessing import StandardScaler
+from sklearn.model_selection import GroupKFold
  
 # split a univariate sequence into samples
 def split_sequence(sequence, n_steps):
@@ -36,54 +37,51 @@ def split_sequence(sequence, n_steps):
 		y.append(seq_y)
 	return array(X), array(y)
 
-def model(response_df, exclude, cv, album, pixels, features):
+def model(X, y, groups, pixels, features, folds):
     
-    yy = response_df.drop(['patientID', 'trimester'], axis =1 ).values
+    results = []
+    y_prediction = []
+    y_testing = []
     
-    #Create your calibration and validation datasets
-    pt1ex = response_df.index[response_df['patientID'] == exclude[cv][0]].tolist()
-    pt2ex = response_df.index[response_df['patientID'] == exclude[cv][1]].tolist()
-    ptex = pt1ex+pt2ex
+    group_kfold = GroupKFold(n_splits=folds)
+    
+    for train_index, test_index in group_kfold.split(X, y, groups):
 
-    #Divide in calibration and validation
-    X_c = np.delete(album, ptex, 0)
-    X_c = X_c.reshape((X_c.shape[0], X_c.shape[1], pixels))
-    y_c = np.delete(yy, ptex, 0)
-    y_c = pd.DataFrame(StandardScaler().fit_transform(y_c))
+        X_train, X_test = X[train_index], X[test_index]
+        y_train, y_test = y[train_index], y[test_index]
 
-    X_v = np.asarray([album[i]  for i in ptex])
-    X_v = X_v.reshape((X_v.shape[0], X_v.shape[1], pixels))
-    y_v = np.asarray([yy[i] for i in ptex])
-    y_v = pd.DataFrame(StandardScaler().fit_transform(y_v))
+        #Create your CNN
+    #    model = Sequential()
+    #    model.add(Conv1D(32,(3), input_shape=(pixels, pixels)))
+    #    model.add(Activation('relu'))
+    #    model.add(MaxPooling1D(pool_size=(2)))
+    #    model.add(Flatten())
+    #    model.add(Dense(50))
+    #    model.add(Dropout(0.2))
+    #    model.add(Activation('relu'))
+    #    model.add(Dense(features))
+    #    model.add(Activation( 'sigmoid'))
+    #    model.compile(optimizer='adam', loss='mse')
     
-    #Create your CNN
-#    model = Sequential()
-#    model.add(Conv1D(32,(3), input_shape=(pixels, pixels)))
-#    model.add(Activation('relu'))
-#    model.add(MaxPooling1D(pool_size=(2)))
-#    model.add(Flatten())
-#    model.add(Dense(50))
-#    model.add(Dropout(0.2))
-#    model.add(Activation('relu'))
-#    model.add(Dense(features))
-#    model.add(Activation( 'sigmoid'))
-#    model.compile(optimizer='adam', loss='mse')
-    
-    model = Sequential()
-    model.add(Conv1D(filters=64, kernel_size=2, activation='relu', input_shape=(pixels, pixels)))
-    model.add(MaxPooling1D(pool_size=2))
-    model.add(Flatten())
-    model.add(Dense(50, activation='relu'))
-    model.add(Dense(features))
-    model.compile(optimizer='adam', loss='mse')
+        model = Sequential()
+        model.add(Conv1D(filters=64, kernel_size=2, activation='relu', input_shape=(pixels, pixels)))
+        model.add(MaxPooling1D(pool_size=2))
+        model.add(Flatten())
+        model.add(Dense(50, activation='relu'))
+        model.add(Dense(features))
+        model.compile(optimizer='adam', loss='mse')
 
-    model.fit(X_c, y_c, epochs=300, verbose=0)
+        model.fit(X_train, y_train, epochs=300, verbose=0)
 
     # demonstrate prediction
-    y_pred = model.predict(X_v, verbose = 0)
-    y_pred = pd.DataFrame(y_pred)
-        
-    return y_pred, y_v
+        y_pred = model.predict(X_test, verbose = 0)
+        y_pred = pd.DataFrame(y_pred)
+        y_test = pd.DataFrame(y_test)
+
+        y_prediction.append(y_pred)
+        y_testing.append(y_test)
+    
+    return pd.concat(y_prediction), pd.concat(y_testing)
 
 def model_multi(response_df, exclude, cv, album, pixels, features):
     
