@@ -3,9 +3,6 @@ import collections
 import numpy as np
 
 
-ConvLayer = collections.namedtuple("ConvLayer", ["pad", "conv", "batch", "relu", "pool"])
-
-
 def init_args(args, **kwargs):
     if args is None:
         return kwargs
@@ -13,34 +10,22 @@ def init_args(args, **kwargs):
         return {**kwargs, **args}
 
 
-def init_convlayer(conv_args=None, batch_args=None, relu_args=None, pool_args=None):
+def init_convlayer(conv_args=None, batch_args=None, relu_args=None, pool_args=None, pool=True):
     s = conv_args["kernel_size"]
     if s % 2 == 0:
         padding = (s // 2 - 1, s // 2, s // 2 - 1, s // 2)
     else:
         padding = (s // 2, s // 2, s // 2, s // 2)
 
-    layer = ConvLayer(
-        torch.nn.ZeroPad2d(padding=padding),
-        torch.nn.Conv2d(**init_args(
-            conv_args)),
-        torch.nn.BatchNorm2d(**init_args(
-            batch_args, num_features=1)),
-        torch.nn.ReLU(**init_args(
-            relu_args)),
-        torch.nn.MaxPool2d(**init_args(
-            pool_args, kernel_size=2, stride=2, padding=0)))
-    return layer
-
-
-def forward_convlayer(x, conv_layer, pool=True):
-    x = conv_layer.pad(x)
-    x = conv_layer.conv(x)
-    x = conv_layer.batch(x)
-    x = conv_layer.relu(x)
+    layer = torch.nn.Sequential()
+    layer.add_module("pad", torch.nn.ZeroPad2d(padding=padding))
+    layer.add_module("conv", torch.nn.Conv2d(**init_args(conv_args)))
+    layer.add_module("batch", torch.nn.BatchNorm2d(**init_args(batch_args, num_features=1)))
+    layer.add_module("relu", torch.nn.ReLU(**init_args(relu_args)))
     if pool:
-        x = conv_layer.pool(x)
-    return x
+        layer.add_module("pool", torch.nn.MaxPool2d(**init_args(
+                pool_args, kernel_size=2, stride=2, padding=0)))
+    return layer
 
 
 class DeepInsight(torch.nn.Module):
@@ -70,7 +55,8 @@ class DeepInsight(torch.nn.Module):
             conv_args=dict(
                 in_channels=4*n_initial_filters, out_channels=8*n_initial_filters,
                 kernel_size=kernel_size1, stride=1),
-            batch_args=dict(num_features=8*n_initial_filters)
+            batch_args=dict(num_features=8*n_initial_filters),
+            pool=False
         )
 
         self.conv2_1 = init_convlayer(
@@ -95,7 +81,8 @@ class DeepInsight(torch.nn.Module):
             conv_args=dict(
                 in_channels=4*n_initial_filters, out_channels=8 * n_initial_filters,
                 kernel_size=kernel_size2, stride=1),
-            batch_args=dict(num_features=8*n_initial_filters)
+            batch_args=dict(num_features=8*n_initial_filters),
+            pool=False
         )
 
         self.avg = torch.nn.AvgPool2d(kernel_size=2, stride=2)
@@ -106,15 +93,15 @@ class DeepInsight(torch.nn.Module):
 
     def forward(self, x):
 
-        x1 = forward_convlayer(x, self.conv1_1)
-        x1 = forward_convlayer(x1, self.conv1_2)
-        x1 = forward_convlayer(x1, self.conv1_3)
-        x1 = forward_convlayer(x1, self.conv1_4, pool=False)
+        x2 = self.conv2_1(x)
+        x2 = self.conv2_2(x2)
+        x2 = self.conv2_3(x2)
+        x2 = self.conv2_4(x2)
 
-        x2 = forward_convlayer(x, self.conv2_1)
-        x2 = forward_convlayer(x2, self.conv2_2)
-        x2 = forward_convlayer(x2, self.conv2_3)
-        x2 = forward_convlayer(x2, self.conv2_4, pool=False)
+        x1 = self.conv1_1(x)
+        x1 = self.conv1_2(x1)
+        x1 = self.conv1_3(x1)
+        x1 = self.conv1_4(x1)
 
         x3 = x1 + x2
         x3 = self.avg(x3)  # TODO: not padded!!! Might loose information here
