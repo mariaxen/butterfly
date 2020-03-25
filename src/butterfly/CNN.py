@@ -114,16 +114,24 @@ def model_multi_CNN(X, y, groups, pixels, features, folds):
         y_train, y_test = y[train_index], y[test_index]
 
         #Create your CNN
+#        model = Sequential()
+#        model.add(Conv2D(32,(3,3), input_shape=(pixels, pixels,6)))
+#        model.add(Activation('relu'))
+#        model.add(MaxPooling2D(pool_size=(2,2)))
+#        model.add(Flatten())
+#        model.add(Dense(64))
+#        model.add(Dropout(0.2))
+#        model.add(Activation('relu'))
+#        model.add(Dense(features))
+#        model.add(Activation( 'sigmoid'))
+#        model.compile(optimizer='adam', loss='mse')
+
         model = Sequential()
-        model.add(Conv2D(32,(3,3), input_shape=(pixels, pixels,6)))
-        model.add(Activation('relu'))
+        model.add(Conv2D(filters=64, kernel_size=(2,2), activation='relu', input_shape=(pixels, pixels,6)))
         model.add(MaxPooling2D(pool_size=(2,2)))
         model.add(Flatten())
-        model.add(Dense(64))
-        model.add(Dropout(0.2))
-        model.add(Activation('relu'))
+        model.add(Dense(50, activation='relu'))
         model.add(Dense(features))
-        model.add(Activation( 'sigmoid'))
         model.compile(optimizer='adam', loss='mse')
         
         model.fit(X_train, y_train, epochs=600, verbose=0)
