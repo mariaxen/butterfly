@@ -24,6 +24,8 @@ from sklearn.model_selection import GroupKFold
 import butterfly.RF
 from sklearn.ensemble import RandomForestRegressor
 from sklearn.multioutput import MultiOutputRegressor
+from keras import losses
+from livelossplot import PlotLossesKeras
  
 # split a univariate sequence into samples
 def split_sequence(sequence, n_steps):
@@ -40,7 +42,7 @@ def split_sequence(sequence, n_steps):
 		y.append(seq_y)
 	return array(X), array(y)
 
-def CNN(X, y, groups, pixels, features, folds):
+def CNN(X, y, groups, pixels, features, folds, epochs, optimiser, loss):
     
     results = []
     
@@ -53,7 +55,7 @@ def CNN(X, y, groups, pixels, features, folds):
     group_kfold = GroupKFold(n_splits=folds)
     
     for train_index, test_index in group_kfold.split(X, y, groups):
-
+        
         X_train, X_test = X[train_index], X[test_index]
         y_train, y_test = y[train_index], y[test_index]
 
@@ -76,9 +78,13 @@ def CNN(X, y, groups, pixels, features, folds):
         model.add(Flatten())
         model.add(Dense(50, activation='relu'))
         model.add(Dense(features))
-        model.compile(optimizer='adam', loss='mse')
+        model.compile(optimizer=optimiser, loss=loss)
+#        model.compile(loss=losses.mean_absolute_error, optimizer='sgd')
 
-        model.fit(X_train, y_train, epochs=600, verbose=0)
+        model.fit(X_train, y_train, epochs=epochs,
+                  validation_data=(X_test, y_test),
+                  callbacks=[PlotLossesKeras()],
+                  verbose=0)
 
     # demonstrate prediction
         y_pred_train = model.predict(X_train, verbose = 0)
@@ -97,7 +103,7 @@ def CNN(X, y, groups, pixels, features, folds):
     
     return pd.concat(y_prediction_train), pd.concat(y_observed_train), pd.concat(y_prediction_test), pd.concat(y_observed_test)
 
-def multi_CNN(X, y, groups, pixels, features, folds):
+def multi_CNN(X, y, groups, pixels, features, folds, optimiser, loss):
     
     X = X.reshape((X.shape[1], pixels, pixels, X.shape[0]))
     
@@ -135,7 +141,7 @@ def multi_CNN(X, y, groups, pixels, features, folds):
         model.add(Flatten())
         model.add(Dense(50, activation='relu'))
         model.add(Dense(features))
-        model.compile(optimizer='adam', loss='mse')
+        model.compile(optimizer=optimiser, loss=loss)
         
         model.fit(X_train, y_train, epochs=600, verbose=0)
 
