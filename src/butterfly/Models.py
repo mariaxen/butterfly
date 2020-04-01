@@ -26,6 +26,7 @@ from sklearn.ensemble import RandomForestRegressor
 from sklearn.multioutput import MultiOutputRegressor
 from keras import losses
 from livelossplot import PlotLossesKeras
+from keras.callbacks import TensorBoard
  
 # split a univariate sequence into samples
 def split_sequence(sequence, n_steps):
@@ -81,10 +82,7 @@ def CNN(X, y, groups, pixels, features, folds, epochs, optimiser, loss):
         model.compile(optimizer=optimiser, loss=loss)
 #        model.compile(loss=losses.mean_absolute_error, optimizer='sgd')
 
-        model.fit(X_train, y_train, epochs=epochs,
-                  validation_data=(X_test, y_test),
-                  callbacks=[PlotLossesKeras()],
-                  verbose=0)
+        model.fit(X_train, y_train, epochs=epochs, verbose=0)
 
     # demonstrate prediction
         y_pred_train = model.predict(X_train, verbose = 0)
@@ -101,7 +99,7 @@ def CNN(X, y, groups, pixels, features, folds, epochs, optimiser, loss):
         y_prediction_test.append(y_pred_test)
         y_observed_test.append(y_test)
     
-    return pd.concat(y_prediction_train), pd.concat(y_observed_train), pd.concat(y_prediction_test), pd.concat(y_observed_test)
+    return pd.concat(y_prediction_train), pd.concat(y_observed_train), pd.concat(y_prediction_test),pd.concat(y_observed_test)
 
 def multi_CNN(X, y, groups, pixels, features, folds, optimiser, loss):
     
@@ -160,7 +158,7 @@ def multi_CNN(X, y, groups, pixels, features, folds, optimiser, loss):
         y_prediction_test.append(y_pred_test)
         y_observed_test.append(y_test)
     
-    return pd.concat(y_prediction_train), pd.concat(y_observed_train), pd.concat(y_prediction_test), pd.concat(y_observed_test)
+    return pd.concat(y_prediction_train), pd.concat(y_observed_train), pd.concat(y_prediction_test),pd.concat(y_observed_test)
 
 def RF(X, y, groups, folds, typeRF):
     
@@ -201,10 +199,10 @@ def RF(X, y, groups, folds, typeRF):
 
         y_pred_test = forest_model.predict(X_test)
         y_pred_test = pd.DataFrame(y_pred_test)
-
+        
         y_train = pd.DataFrame(y_train)
         y_test  = pd.DataFrame(y_test)
-
+        
         y_prediction_train.append(y_pred_train)
         y_observed_train.append(y_train)
         y_prediction_test.append(y_pred_test)
