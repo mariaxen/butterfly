@@ -15,6 +15,8 @@ from scipy.spatial import ConvexHull
 import scipy
 import pylab
 from sklearn.preprocessing import StandardScaler
+from sklearn.preprocessing import RobustScaler
+from sklearn.preprocessing import QuantileTransformer
 from sklearn.manifold import TSNE
 from math import atan2
 
@@ -119,13 +121,10 @@ def create_album(DF, name_of_omic, pix_size, perplexity):
 
     # Select and prepare your chosen omics
     omic = [col for col in DF if col.startswith(name_of_omic)]
-    omic.append("patientID")
     omics_df = DF[omic]
-    omics_df = omics_df.transpose()
-    patient_IDs = omics_df.iloc[omics_df.shape[0]-1]
-    omics_df = omics_df.drop(omics_df.index[omics_df.shape[0]-1])
     omics_df = pd.DataFrame(StandardScaler().fit_transform(omics_df))
-    
+    omics_df = omics_df.transpose()
+        
     # omics_df = np.log(omics_df)
     pca = TSNE(perplexity=perplexity)
     principalComponents = pca.fit_transform(omics_df)
@@ -201,5 +200,5 @@ def create_album(DF, name_of_omic, pix_size, perplexity):
         #    pic = pic.flatten()
         album.append(pic)
 
-    return album, patient_IDs
+    return album
     # plot_im = plt.imshow(pic, cmap = 'RdGy')

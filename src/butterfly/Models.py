@@ -55,28 +55,18 @@ def CNN(X, y, groups, pixels, features, folds, epochs, optimiser, loss, type_mod
     
     group_kfold = GroupKFold(n_splits=folds)
     
+    if (type_model == "MCNN"):
+    
+        X = X.reshape((X.shape[1], pixels, pixels, X.shape[0]))
+
     for train_index, test_index in group_kfold.split(X, y, groups):
         
         X_train, X_test = X[train_index], X[test_index]
         y_train, y_test = y[train_index], y[test_index]
 
         #Train your multioutput RF
-        if type_model == 'daisy_chain':
-            model = butterfly.RF.MultiOutputRF(100).fit(X_train, y_train)
-        
-        elif type_model == 'multi_RF_regressor':
-            model = MultiOutputRegressor(RandomForestRegressor(n_estimators=100,
-                                                          min_samples_split = 5,
-                                                          random_state=0))
-            model.fit(X_train, y_train)
-        
-        elif type_model == 'RF_regressor':
-            model = RandomForestRegressor(n_estimators=100,
-                                                          min_samples_split = 5,
-                                                          random_state=0)
-            model.fit(X_train, y_train)
     
-        elif type_model == 'CNN':
+        if type_model == 'CNN':
 
             model = Sequential()
             model.add(Conv1D(filters=64, kernel_size=2, activation='relu', input_shape=(pixels, pixels)))
@@ -87,12 +77,36 @@ def CNN(X, y, groups, pixels, features, folds, epochs, optimiser, loss, type_mod
             model.compile(optimizer=optimiser, loss=loss)
 
             model.fit(X_train, y_train, epochs=epochs, verbose=0)
+            
+        elif type_model == 'MCNN':
+                        
+            model = Sequential()
+            model.add(Conv2D(filters=64, kernel_size=(2,2), activation='relu', input_shape=(pixels, pixels,6)))
+            model.add(MaxPooling2D(pool_size=(2,2)))
+            model.add(Flatten())
+            model.add(Dense(50, activation='relu'))
+            model.add(Dense(features))
+            model.compile(optimizer=optimiser, loss=loss)
+            
+            #        model = Sequential()
+            #        model.add(Conv2D(32,(3,3), input_shape=(pixels, pixels,6)))
+            #        model.add(Activation('relu'))
+            #        model.add(MaxPooling2D(pool_size=(2,2)))
+            #        model.add(Flatten())
+            #        model.add(Dense(64))
+            #        model.add(Dropout(0.2))
+            #        model.add(Activation('relu'))
+            #        model.add(Dense(features))
+            #        model.add(Activation( 'sigmoid'))
+            #        model.compile(optimizer='adam', loss='mse')
+
+            model.fit(X_train, y_train, epochs=epochs, verbose=0)
 
     # demonstrate prediction
-        y_pred_train = model.predict(X_train, verbose = 0)
+        y_pred_train = model.predict(X_train)
         y_pred_train = pd.DataFrame(y_pred_train)
 
-        y_pred_test = model.predict(X_test, verbose = 0)
+        y_pred_test = model.predict(X_test)
         y_pred_test = pd.DataFrame(y_pred_test)
 
         y_train = pd.DataFrame(y_train)
@@ -105,9 +119,7 @@ def CNN(X, y, groups, pixels, features, folds, epochs, optimiser, loss, type_mod
     
     return pd.concat(y_prediction_train), pd.concat(y_observed_train), pd.concat(y_prediction_test),pd.concat(y_observed_test)
 
-def multi_CNN(X, y, groups, pixels, features, folds, optimiser, loss):
-    
-    X = X.reshape((X.shape[1], pixels, pixels, X.shape[0]))
+def RF(X, y, groups, folds, ntrees, type_model):
     
     results = []
     
@@ -120,38 +132,31 @@ def multi_CNN(X, y, groups, pixels, features, folds, optimiser, loss):
     group_kfold = GroupKFold(n_splits=folds)
     
     for train_index, test_index in group_kfold.split(X, y, groups):
-
+        
         X_train, X_test = X[train_index], X[test_index]
         y_train, y_test = y[train_index], y[test_index]
 
-        #Create your CNN
-#        model = Sequential()
-#        model.add(Conv2D(32,(3,3), input_shape=(pixels, pixels,6)))
-#        model.add(Activation('relu'))
-#        model.add(MaxPooling2D(pool_size=(2,2)))
-#        model.add(Flatten())
-#        model.add(Dense(64))
-#        model.add(Dropout(0.2))
-#        model.add(Activation('relu'))
-#        model.add(Dense(features))
-#        model.add(Activation( 'sigmoid'))
-#        model.compile(optimizer='adam', loss='mse')
-
-        model = Sequential()
-        model.add(Conv2D(filters=64, kernel_size=(2,2), activation='relu', input_shape=(pixels, pixels,6)))
-        model.add(MaxPooling2D(pool_size=(2,2)))
-        model.add(Flatten())
-        model.add(Dense(50, activation='relu'))
-        model.add(Dense(features))
-        model.compile(optimizer=optimiser, loss=loss)
+        #Train your multioutput RF
+        if type_model == 'daisy_chain':
+            model = butterfly.RF.MultiOutputRF(ntrees).fit(X_train, y_train)
         
-        model.fit(X_train, y_train, epochs=600, verbose=0)
-
+        elif type_model == 'multi_RF_regressor':
+            model = MultiOutputRegressor(RandomForestRegressor(n_estimators=ntrees,
+                                                          min_samples_split = 5,
+                                                          random_state=0))
+            model.fit(X_train, y_train)
+        
+        elif type_model == 'RF_regressor':
+            model = RandomForestRegressor(n_estimators=ntrees,
+                                                          min_samples_split = 5,
+                                                          random_state=0)
+            model.fit(X_train, y_train)
+    
     # demonstrate prediction
-        y_pred_train = model.predict(X_train, verbose = 0)
+        y_pred_train = model.predict(X_train)
         y_pred_train = pd.DataFrame(y_pred_train)
 
-        y_pred_test = model.predict(X_test, verbose = 0)
+        y_pred_test = model.predict(X_test)
         y_pred_test = pd.DataFrame(y_pred_test)
 
         y_train = pd.DataFrame(y_train)
