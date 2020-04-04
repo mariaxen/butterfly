@@ -14,6 +14,7 @@ import numpy as np
 from scipy.spatial import ConvexHull
 import scipy
 import pylab
+from sklearn.preprocessing import RobustScaler
 from sklearn.preprocessing import StandardScaler
 from sklearn.preprocessing import RobustScaler
 from sklearn.preprocessing import QuantileTransformer
@@ -102,9 +103,7 @@ def minimum_bounding_rectangle(points):
 
     return rval
 
-# name_of_omic = 'plasma_s'
-# pix_size = 40
-def create_album(DF, name_of_omic, pix_size, perplexity):
+def create_album(DF, name_of_omic, pix_size, perplexity, scaler):
     """
    Create your album that contains all the pictures you are training on
    Each picture is one omics dataset for one patient and one trimester
@@ -122,7 +121,12 @@ def create_album(DF, name_of_omic, pix_size, perplexity):
     # Select and prepare your chosen omics
     omic = [col for col in DF if col.startswith(name_of_omic)]
     omics_df = DF[omic]
-    omics_df = pd.DataFrame(StandardScaler().fit_transform(omics_df))
+    
+    if scaler == "Robust":    
+        omics_df = pd.DataFrame(RobustScaler().fit_transform(omics_df))
+    elif scaler == "Standard":
+        omics_df = pd.DataFrame(StandardScaler().fit_transform(omics_df))    
+    
     omics_df = omics_df.transpose()
         
     # omics_df = np.log(omics_df)

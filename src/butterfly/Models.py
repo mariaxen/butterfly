@@ -25,7 +25,6 @@ import butterfly.RF
 from sklearn.ensemble import RandomForestRegressor
 from sklearn.multioutput import MultiOutputRegressor
 from keras import losses
-from livelossplot import PlotLossesKeras
 from keras.callbacks import TensorBoard
  
 # split a univariate sequence into samples
