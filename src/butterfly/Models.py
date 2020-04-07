@@ -26,6 +26,7 @@ from sklearn.ensemble import RandomForestRegressor
 from sklearn.multioutput import MultiOutputRegressor
 from keras import losses
 from keras.callbacks import TensorBoard
+from random import sample
  
 # split a univariate sequence into samples
 def split_sequence(sequence, n_steps):
@@ -42,8 +43,18 @@ def split_sequence(sequence, n_steps):
 		y.append(seq_y)
 	return array(X), array(y)
 
-def CNN(X, y, groups, pixels, features, folds, epochs, optimiser, loss, type_model):
+def CNN(albums, DF, feat_n, predictor_index, groups, responses,
+        pixels, features, folds, epochs, optimiser, loss, type_model):
     
+    groups = DF['patientID']
+    
+    #Get your response dataset
+    response = responses[predictor_index]
+    response_df = DF[response]
+    y = response_df.values
+    y = y[:,feat_n]
+
+    #############
     results = []
     
     y_prediction_train = []
@@ -54,8 +65,16 @@ def CNN(X, y, groups, pixels, features, folds, epochs, optimiser, loss, type_mod
     
     group_kfold = GroupKFold(n_splits=folds)
     
-    if (type_model == "MCNN"):
+    if (type_model == "CNN"):
+        #CNN
+        X = np.asarray(albums[predictor_index])
     
+    elif (type_model == "MCNN"):
+        #Multi-layered CNN 
+        X = [albums[0], albums[1], albums[2], albums[3], albums[4], albums[5], albums[6]]
+        del X[predictor_index]
+        X = np.array(X, dtype = float)
+
         X = X.reshape((X.shape[1], pixels, pixels, X.shape[0]))
 
     for train_index, test_index in group_kfold.split(X, y, groups):
