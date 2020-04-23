@@ -126,6 +126,8 @@ def create_album(DF, name_of_omic, pix_size, perplexity, scaler):
         omics_df = pd.DataFrame(RobustScaler().fit_transform(omics_df))
     elif scaler == "Standard":
         omics_df = pd.DataFrame(StandardScaler().fit_transform(omics_df))    
+    elif scaler == "QuantileT":
+        omics_df = pd.DataFrame(QuantileTransformer().fit_transform(omics_df))    
     
     omics_df = omics_df.transpose()
         
