@@ -105,7 +105,7 @@ model.add(Conv2D(
 model.add(MaxPooling2D(pool_size=(2,2)))
 model.add(Flatten())
 model.add(Dense(50, activation='relu'))
-model.add(Dense(features, activation='sigmoid'))
+model.add(Dense(features, activation='linear'))
 model.compile(optimizer=optimiser, loss=loss)
 
 
