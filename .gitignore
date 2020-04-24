@@ -2,6 +2,7 @@
 data
 .ipynb_checkpoints
 _out
+.vscode
 
 # Temporary and binary files
 *~
