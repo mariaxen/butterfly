@@ -1,3 +1,5 @@
+.vscode
+
 .gitignore
 data
 .ipynb_checkpoints
