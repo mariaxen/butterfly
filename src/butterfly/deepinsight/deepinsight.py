@@ -120,6 +120,12 @@ if __name__ == '__main__':
 
     m = DeepInsight(input_dim=X.shape[2:])
 
+    from sklearn.preprocessing import StandardScaler
+    ss = StandardScaler()
+    ss.fit(X)
+    ss.transform(X2)
+
+
     import h5py
     file = h5py.File('../../../external/DeepInsight/Data/dataset2.mat', "r")
     print(file["dset"]["Xtest"][...].shape)
