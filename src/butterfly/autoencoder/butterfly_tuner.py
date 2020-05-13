@@ -59,21 +59,10 @@ class Butterfly(HyperModel):
 
     def build(self, hp: kerastuner.HyperParameters):
 
-        hp.Int('latent_dim', min_value=2, max_value=12)
-
-        encoding_dims = [hp.Int(
-            f"var_encoding_dim_{omic_name}",
-            min_value=5,
-            max_value=30,
-            step=5
-        ) for omic_name in self.omic_names]
-
         input_layers = []
-        dropout_layers = []
         
         encoding_layers = []
         encoding_layers_dims = []
-
 
         decoding_layers = []
         decoding_layers_names = []
@@ -81,8 +70,12 @@ class Butterfly(HyperModel):
         variables = dict()
 
         # ENCODING
+        print("+++++++++++++++++")
+        print("ENCODING")
         for i, (omic_name, omic_dim) in enumerate(zip(self.omic_names, self.omic_dims)):
             
+            print(omic_name)
+
             variables[omic_name] = dict()
 
             # input
@@ -90,40 +83,44 @@ class Butterfly(HyperModel):
             input_layers.append(input_layer)
 
             # dropout
-            dropout_layer = Dropout(
-                rate=hp.Float(
-                    f"var_dropout_{omic_name}",
+            dropout_rate = hp.Float(
+                    f"var_dropout_rate_{omic_name}",
                     min_value=0.0,
                     max_value=0.5,
                     default=0.25,
-                    step=0.05,
-                ), 
-                name=f"Dropout_{omics[i]}")(input_layer)
-            dropout_layers.append(dropout_layer)
+                    step=0.05
+                )
+
+            dropout_layer = Dropout(
+                rate=dropout_rate, 
+                name=f"dropout_{omic_name}")(input_layer)
 
             # number of encoding layers
-            n_layers = hp.Int(f'n_layers_{omic_name}', min_value=1, max_value=2)
+            n_layers = hp.Int(f'var_n_layers_{omic_name}', min_value=1, max_value=2)
             
             # define encoding layer stack
-            variables[omic_name]["dense"] = []
+            variables[omic_name]["dense_dims"] = []
 
             previous_layer = dropout_layer
             previous_layer_dim = 50
+            
             for i_layer in range(n_layers):
                 
-                dens_dim = hp.Int(
+                dense_dim = hp.Int(
                     f'var_encode_dense_{omic_name}_{i_layer}', 
                     min_value=5, 
                     max_value=previous_layer_dim)
 
-                dens = Dense(
-                    dens_dim, 
+                dense = Dense(
+                    dense_dim, 
                     activation='elu',
                     name=f'encode_dense_{omic_name}_{i_layer}')(previous_layer)
+
+                print(dense_dim)
                 
-                previous_layer = dens
-                previous_layer_dim = dens_dim
-                variables[omic_name]["dense"].append(dens_dim)
+                previous_layer = dense
+                previous_layer_dim = dense_dim
+                variables[omic_name]["dense_dims"].append(dense_dim)
 
             encoding_layers.append(previous_layer)
             encoding_layers_dims.append(previous_layer_dim)
@@ -150,32 +147,49 @@ class Butterfly(HyperModel):
             sum(encoding_layers_dims),
             activation='elu', name="Concatenate_Inverse")(bottleneck)
 
+        print("+++++++++++++++++")
+        print("DECODING")
         for i, (omic_name, omic_dim) in enumerate(zip(self.omic_names, self.omic_dims)):
             
+            print(omic_name)
+            
             # define encoding layer stack
-            dense_layers_dims = variables[omic_name]["dense"]
+            dense_layers_dims = variables[omic_name]["dense_dims"]
+            
             previous_layer = merge_inverse
             previous_layer_name = None
+
             for i_layer, dens_dim in reversed(list(enumerate(dense_layers_dims))):
 
+                print(dens_dim)
+
                 dens_name = f'decode_dense_{omic_name}_{i_layer}'
+
                 print(dens_name)
+
                 dens = Dense(
                     dens_dim, 
                     activation='elu',
                     name=dens_name)(previous_layer)
                 
-                previous_layer = dens
                 previous_layer_name = dens_name
+                previous_layer = dens
 
-            decoding_layers.append(previous_layer)
-            decoding_layers_names.append(dens_name)
+            last_name = f'last_dense_{omic_name}_{i_layer}'
+            last_layer = Dense(
+                    omic_dim, 
+                    activation='linear',
+                    name=last_name)(previous_layer)
 
+            decoding_layers.append(last_layer)
+            decoding_layers_names.append(last_name)
 
         # Combining Encoder and Decoder into an Autoencoder model
         autoencoder = Model(input_layers, decoding_layers, name="autoencoder")
 
         # Compile Autoencoder
+        print(decoding_layers_names)
+
         autoencoder.compile(
             optimizer='adam',
             loss={n : 'mean_squared_error' for n in decoding_layers_names})
@@ -183,13 +197,49 @@ class Butterfly(HyperModel):
         return autoencoder
 
 # %%
-hypermodel = Butterfly(omics, [o.shape[1] for o in Single_Omics])
+hypermodel = Butterfly(
+    omic_names=omics, 
+    omic_dims=[o.shape[1] for o in Single_Omics])
+
 tuner = Hyperband(
     hypermodel,
     objective='val_loss',
     max_epochs=5,
     directory='keras-tuner',
     project_name='Butterfly_'+datetime.datetime.now().strftime("%Y%m%d-%H%M"))
+
+tuner.search(Single_Omics,
+            Single_Omics,
+            epochs = 3,
+            validation_split=0.2,
+            batch_size = 16)
+
+
+
+
+# %%
+hypermodel = Butterfly(
+    omic_names=omics, 
+    omic_dims=[o.shape[1] for o in Single_Omics])
+
+tuner = Hyperband(
+    hypermodel,
+    objective='val_loss',
+    max_epochs=5,
+    directory='keras-tuner',
+    project_name='Butterfly_'+datetime.datetime.now().strftime("%Y%m%d-%H%M"))
+
+# %%
+tuner = BayesianOptimization(
+        hypermodel,
+        objective='mse',
+        max_trials=10,
+        seed=42,
+        executions_per_trial=2
+    )
+
+tuner.search(Single_Omics, Single_Omics, 
+epochs=10, validation_split=0.1, verbose=0)
 
 # %%
 tuner.search(Single_Omics,
