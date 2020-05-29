@@ -91,6 +91,8 @@ class MyHyperModel(HyperModel):
 
         for d in hidden_dims[1:]:
             x = tf.keras.layers.Dense(d)(x)
+
+
             x = tf.keras.layers.BatchNormalization()(x)
             x = tf.keras.layers.Activation('relu')(x)
             x = tf.keras.layers.Dropout(0.5)(x)
@@ -122,6 +124,22 @@ class MyHyperModel(HyperModel):
 
 
 # %%
+
+# Construct the BayesianOptimization tuner using the hypermodel class created
+bayesian_tuner = BayesianOptimization(
+    hypermodel,
+    objective='mean_squared_error',
+    max_trials=10,
+    seed=10,
+    project_name='infoVAE_'+datetime.datetime.now().strftime("%Y%m%d-%H%M"))
+
+# Search for the best parameters of the neural network using the contructed Hypberband tuner
+bayesian_tuner.search(data,
+            epochs = max_epochs,
+            validation_split=0.2,
+            batch_size = batch_size)
+
+
 hypermodel = MyHyperModel()
 tuner = Hyperband(
     hypermodel,
@@ -135,5 +153,14 @@ tuner.search(data,
             epochs = max_epochs,
             validation_split=0.2,
             batch_size = batch_size)
+
+# %%
+BayesianOptimization(
+            hypermodel,
+            objective='mse',
+            max_trials=10,
+            seed=42,
+            executions_per_trial=2
+        )
 
 # %%

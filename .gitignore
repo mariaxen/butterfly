@@ -1,5 +1,6 @@
 .vscode
 keras-tuner
+work
 
 .gitignore
 data
