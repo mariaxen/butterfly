@@ -174,7 +174,7 @@ class SingleCellTransformer(sklearn.base.BaseEstimator):
 
         # fit embedding
         print("Embedding")
-        if isinstance(self.embedding_algorithm, sklearn.base.TransformerMixin):
+        if isinstance(self.embedding_algorithm_fit_, sklearn.base.BaseEstimator):
             X_embedded = self.embedding_algorithm_fit_.fit_transform(X)
         else:
             X_embedded = self.embedding_algorithm_fit_(X)
@@ -194,7 +194,6 @@ class SingleCellTransformer(sklearn.base.BaseEstimator):
         # grid intervals
         x = np.linspace(min(X_rotated[:, 0]), max(X_rotated[:, 0]), self.size_[0] + 1)
         y = np.linspace(min(X_rotated[:, 1]), max(X_rotated[:, 1]), self.size_[1] + 1)
-
 
         print("Images")
         unique_groups = np.unique(groups)
@@ -220,7 +219,7 @@ class SingleCellTransformer(sklearn.base.BaseEstimator):
                     if self.means:
                         album[i_g, 1:, i, j] = group_data[feature_idx, :].mean(axis=0)
 
-        #normalize
+        # normalize
         album[:, 0, :, :] /= np.max(album[:, 0, :, :])
 
         return album

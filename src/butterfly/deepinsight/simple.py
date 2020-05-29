@@ -10,6 +10,8 @@ class SimpleCNN(torch.nn.Module):
     def __init__(self):
         super(SimpleCNN, self).__init__()
 
+        self.hello = 5
+
         # Input channels = 3, output channels = 18
         self.conv1 = torch.nn.Conv2d(3, 18, kernel_size=3, stride=1, padding=1)
         self.pool = torch.nn.MaxPool2d(kernel_size=2, stride=2, padding=0)
@@ -21,6 +23,7 @@ class SimpleCNN(torch.nn.Module):
         self.fc2 = torch.nn.Linear(64, 10)
 
     def forward(self, x):
+
         # Computes the activation of the first convolution
         # Size changes from (3, 32, 32) to (18, 32, 32)
         x = F.relu(self.conv1(x))
@@ -41,3 +44,4 @@ class SimpleCNN(torch.nn.Module):
         # Size changes from (1, 64) to (1, 10)
         x = self.fc2(x)
         return (x)
+
