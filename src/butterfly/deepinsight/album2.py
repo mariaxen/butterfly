@@ -2,7 +2,7 @@ import joblib
 import numpy as np
 from scipy.spatial import ConvexHull
 import sklearn.manifold
-import torch.utils.data
+# import torch.utils.data
 import tqdm
 
 
@@ -87,6 +87,8 @@ class AlbumTransformer(sklearn.base.BaseEstimator, sklearn.base.TransformerMixin
 
         if isinstance(self.size, int):
             self.size_ = (self.size, self.size)
+        else:
+            self.size_ = self.size
 
         if self.embedding_algorithm is None:
             self.embedding_algorithm_fit_ = sklearn.manifold.TSNE(n_components=2, perplexity=25)
@@ -225,17 +227,17 @@ class SingleCellTransformer(sklearn.base.BaseEstimator):
 
         return album
 
-class AlbumDataset(torch.utils.data.Dataset):
+# class AlbumDataset(torch.utils.data.Dataset):
 
-    def __init__(self, album, labels):
-        self.album = torch.tensor(album).float()
-        self.labels = torch.tensor(labels).long()
+#     def __init__(self, album, labels):
+#         self.album = torch.tensor(album).float()
+#         self.labels = torch.tensor(labels).long()
 
-    def __getitem__(self, item):
-        return self.album[item], self.labels[item]
+#     def __getitem__(self, item):
+#         return self.album[item], self.labels[item]
 
-    def __len__(self):
-        return self.album.shape[0]
+#     def __len__(self):
+#         return self.album.shape[0]
 
 #
 # def create_album(data, size, embedding=None, layers=None):
