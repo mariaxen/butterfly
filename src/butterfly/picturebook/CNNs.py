@@ -83,7 +83,7 @@ from kerastuner.tuners import RandomSearch, Hyperband, BayesianOptimization
 from sklearn.model_selection import RepeatedKFold
 from sklearn.linear_model import LinearRegression
 
-def NN(albums, albums2, albums3, DF, feat_n, predictor_index, responses, pixels, 
+def models(albums, albums2, albums3, DF, feat_n, predictor_index, responses, pixels, 
         features, folds, epochs, optimiser, loss, type_model, 
         type_input, kernel_size, groups, scaler):
     
@@ -133,14 +133,6 @@ def NN(albums, albums2, albums3, DF, feat_n, predictor_index, responses, pixels,
         X = X.reshape((X.shape[1], pixels, pixels, X.shape[0]))
         dimensions = 2
         
-    elif (type_input == "TSNE_vgg"):
-        #Multi-layered CNN 
-        X = [albums[predictor_index], albums2[predictor_index], albums3[predictor_index]]
-        X = np.array(X, dtype = float)
-        
-        X = X.reshape((X.shape[1], pixels, pixels, X.shape[0]))
-        dimensions = 2        
-
     for train_index, test_index in group_kfold.split(X, y, groups):
         
         X_train, X_test = X[train_index], X[test_index]

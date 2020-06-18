@@ -2,7 +2,6 @@ import joblib
 import numpy as np
 from scipy.spatial import ConvexHull
 import sklearn.manifold
-# import torch.utils.data
 import tqdm
 
 
@@ -154,6 +153,15 @@ class AlbumTransformer(sklearn.base.BaseEstimator, sklearn.base.TransformerMixin
 
 
 class SingleCellTransformer(sklearn.base.BaseEstimator):
+    """
+    Similar to AlbumTransformer but we combine samples from one FCS file by group.
+    TODO: fit and transform searately should work eventually (using means and interpolation)
+
+    Parameters
+    ----------
+    sklearn : [type]
+        [description]
+    """
 
     def __init__(self, size, embedding_algorithm=None, means=False, store_embeddings=False):
         self.size = size
@@ -226,65 +234,3 @@ class SingleCellTransformer(sklearn.base.BaseEstimator):
         album[:, 0, :, :] /= np.max(album[:, 0, :, :])
 
         return album
-
-# class AlbumDataset(torch.utils.data.Dataset):
-
-#     def __init__(self, album, labels):
-#         self.album = torch.tensor(album).float()
-#         self.labels = torch.tensor(labels).long()
-
-#     def __getitem__(self, item):
-#         return self.album[item], self.labels[item]
-
-#     def __len__(self):
-#         return self.album.shape[0]
-
-#
-# def create_album(data, size, embedding=None, layers=None):
-#     """
-#     Create your album that contains all the pictures you are training on
-#     """tesnor
-#
-#     if isinstance(size, int):
-#         size = (size, size)
-#
-#     if embedding is None:
-#         embedding = sklearn.manifold.TSNE(perplexity=25)
-#
-#     if layers is None:
-#         layers = [
-#             lambda values, n_points: len(values),
-#             lambda values, n_points: np.mean(values)
-#         ]
-#
-#     embedded = embedding.fit_transform(data.T)
-#     bbox = minimum_bounding_rectangle(embedded)
-#
-#     xDiff = bbox[2, 0] - bbox[1, 0]
-#     yDiff = bbox[2, 1] - bbox[1, 1]
-#     angle = np.arctan2(xDiff, yDiff)
-#
-#     embedded = Rotate2D(embedded, np.array([bbox[2, 0], bbox[2, 1]]), angle)
-#
-#     # grid intervals
-#     x = np.linspace(min(embedded[:, 0]), max(embedded[:, 0]), size[0] + 1)
-#     y = np.linspace(min(embedded[:, 1]), max(embedded[:, 1]), size[1] + 1)
-#
-#     album = np.empty((data.shape[0], len(layers), size[0], size[1]))
-#     for row_idx in range(data.shape[0]):
-#         print(row_idx, "========================================")
-#         for i in range(size[0]):
-#             for j in range(size[1]):
-#                 pixel_idx = \
-#                     (embedded[:, 0] >= x[i]) & ((embedded[:, 0] < x[i + 1])
-#                                                 | ((i + 1 == size[1]) & (embedded[:, 0] <= x[i + 1]))) & \
-#                     (embedded[:, 1] >= y[j]) & ((embedded[:, 1] < y[j + 1])
-#                                                 | ((j + 1 == size[1]) & (embedded[:, 1] <= y[j + 1])))
-#                 values = data[row_idx, pixel_idx]
-#                 for l, method in enumerate(layers):
-#                     if values.size == 0:
-#                         album[row_idx, l, i, j] = 0
-#                     else:
-#                         album[row_idx, l, i, j] = method(values, embedded.shape[0])
-#
-#     return album, embedding, embedded, x, y
