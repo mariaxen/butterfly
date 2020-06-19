@@ -2,8 +2,8 @@ from sklearn import preprocessing
 from sklearn import model_selection
 import numpy as np
 import pandas as pd
-from tensorflow.keras import *
-from tensorflow.keras.layers import Dense, Flatten, Conv1D, Conv2D, MaxPooling1D
+from tensorflow.keras import Sequential
+from tensorflow.keras.layers import Dense, Flatten, Conv1D, Conv2D, MaxPooling1D, MaxPooling2D
 
 
 def NN(X, y, pixels, folds, epochs, optimiser, loss, type_model, 
@@ -28,13 +28,12 @@ def NN(X, y, pixels, folds, epochs, optimiser, loss, type_model,
         #Get your predictor dataset
     if (type_input == "TSNE_S"):
         #For single CNN
+        X = np.asarray(X)
         dimensions = 2
     
     elif (type_input == "TSNE_M"):
         #Multi-layered CNN 
-        X = [albums[0], albums[1], albums[2], albums[3], albums[4], albums[5], albums[6]]
         X = np.array(X, dtype = float)
-
         X = X.reshape((X.shape[1], pixels, pixels, X.shape[0]))
         dimensions = 2
         
@@ -179,11 +178,11 @@ def NN(X, y, pixels, folds, epochs, optimiser, loss, type_model,
         elif type_model == 'MCNN':
                         
             model = Sequential()
-            model.add(Conv2D(filters=64, kernel_size=(kernel_size,kernel_size), activation='relu', input_shape=(X.shape[1], X.shape[2],6)))
+            model.add(Conv2D(filters=64, kernel_size=(kernel_size,kernel_size), activation='relu', input_shape=(X.shape[1], X.shape[2],7)))
             model.add(MaxPooling2D(pool_size=(2,2)))
             model.add(Flatten())
             model.add(Dense(50, activation='relu'))
-            model.add(Dense(features, activation='linear'))
+            model.add(Dense(1, activation='linear'))
             model.compile(optimizer=optimiser, loss=loss)
             
             #model = Sequential()

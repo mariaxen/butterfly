@@ -15,6 +15,11 @@ import numpy as np
 data_path = pathlib.Path("/home/mgbckr/mnt/nalab/workspaces/nalab-butterfly/data")
 out_path = data_path / "_interim/picturebook"
 
+config = tf.ConfigProto(
+        device_count = {'GPU': 0}
+    )
+sess = tf.Session(config=config)
+
 # %% load data / CSV
 with open(out_path / "multiomics_training.pkl", "rb") as f:
     data_multiomics_training = pickle.load(f)
@@ -52,27 +57,28 @@ plt.ylim([0, 60])
 # %%
 with open(out_path / "multiomics_training_albums_individual_omics.pkl", "rb") as f:
     albums = pickle.load(f)
-albums_list_of_arrays = [array[:,1,:,:] for o, array in albums.items()]
+albums_list_of_arrays = [albums[o][:,1,:,:] for o in sorted(albums.keys())]
 
 # %%
 with open("/home/mxenoc/shared/albums_all_50.pkl", 'rb') as f:
     albums_50 = pickle.load(f)
 
-X = np.asarray(albums_50[0])
-pixels = 128
+X = albums_list_of_arrays
+pixels = 64
 epochs = 10
 optimiser = 'adam'
 loss = 'mse'
 type_model = 'CNN'
-type_input = 'TSNE_S'
+type_input = "TSNE_M"
 kernel_size = 2 
 
 _, _, prediction_test, observed_test = \
     butterfly.picturebook.NNs.NN(X, y, pixels, folds, epochs, optimiser, loss, type_model, 
         type_input, kernel_size, groups, scaler)
 
-
 # %%
 
 import scipy.stats
 scipy.stats.spearmanr(prediction_test.values, observed_test.values)
+
+# %%
