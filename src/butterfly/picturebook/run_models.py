@@ -5,7 +5,9 @@
 # %% imports
 import pathlib
 import pickle
-import butterfly.picturebook>LRF
+import butterfly.picturebook.LRF
+import butterfly.picturebook.NNs
+import numpy as np
 
 # %% settings
 
@@ -17,21 +19,60 @@ out_path = data_path / "_interim/picturebook"
 with open(out_path / "multiomics_training.pkl", "rb") as f:
     data_multiomics_training = pickle.load(f)
 
-
 # %%
 
-X = data_multiomics_training.drop(columns="meta")
-y = data_multiomics_training.meta["gestational_age"]
-groups = data_multiomics_training.meta["Gates ID"]
+X = data_multiomics_training.drop(columns="meta").values
+y = data_multiomics_training.meta["gestational_age"].values
+groups = data_multiomics_training.meta["Gates ID"].values
 
 ntrees = 100
-type_model = 'Lasso'
+type_model = 'RF'
 scaler = False
 longitudinal = True
+folds = 10
 
 # %%
 
-butterfly.picturebook.LRF.LRF(X, y, folds, ntrees, type_model, 
-groups, scaler,longitudinal)
+_, _, prediction_test, observed_test = \
+    butterfly.picturebook.LRF.LRF(
+        X, y, folds, ntrees, type_model, 
+        groups, scaler,longitudinal)
 
 # %%
+import scipy.stats
+scipy.stats.spearmanr(prediction_test.values, observed_test.values)
+
+# %%
+import matplotlib.pyplot as plt
+sns.regplot(observed_test.values, prediction_test.values)
+plt.xlim([0, 60])
+plt.ylim([0, 60])
+
+
+# %%
+with open(out_path / "multiomics_training_albums_individual_omics.pkl", "rb") as f:
+    albums = pickle.load(f)
+albums_list_of_arrays = [array[:,1,:,:] for o, array in albums.items()]
+
+# %%
+with open("/home/mxenoc/shared/albums_all_50.pkl", 'rb') as f:
+    albums_50 = pickle.load(f)
+
+X = np.asarray(albums_50[0])
+pixels = 128
+epochs = 10
+optimiser = 'adam'
+loss = 'mse'
+type_model = 'CNN'
+type_input = 'TSNE_S'
+kernel_size = 2 
+
+_, _, prediction_test, observed_test = \
+    butterfly.picturebook.NNs.NN(X, y, pixels, folds, epochs, optimiser, loss, type_model, 
+        type_input, kernel_size, groups, scaler)
+
+
+# %%
+
+import scipy.stats
+scipy.stats.spearmanr(prediction_test.values, observed_test.values)

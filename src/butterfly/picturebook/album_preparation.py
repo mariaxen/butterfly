@@ -29,7 +29,7 @@ data_multiomics_training.columns = pd.MultiIndex.from_tuples([
     ("meta", c[0]) if "Unnamed" in c[1] else c for c in data_multiomics_training.columns])
 
 with open(out_path / "multiomics_training.pkl", "wb") as f:
-    pickle.dump(album, f)
+    pickle.dump(data_multiomics_training, f)
 
 # %% initialize regular album transformer
 # %%time
@@ -38,12 +38,23 @@ with open(out_path / "multiomics_training.pkl", "wb") as f:
 
 # %% initialize rapid AI album transformer
 %%time
-album_transformer = AlbumTransformer(64, cuml.manifold.TSNE())
-album_transformer.fit(data_multiomics_training.drop(columns="meta").values)
+omics = [
+    'cellfree_rna', 'plasma_luminex', 'serum_luminex', 'microbiome',
+    'immune_system', 'metabolomics', 'plasma_somalogic']
+albums = dict()
+for o in omics:
+    print(o)
+    album_transformer = AlbumTransformer(64, cuml.manifold.TSNE())
+    album_transformer.fit(data_multiomics_training[o].values)
+    album = album_transformer.transform(data_multiomics_training[o].values)
+    albums[o] = album
 
-# %% transform data
-album = album_transformer.transform(data_multiomics_training["cellfree_rna"].values)
-print(album.shape)
+# %%
+with open(out_path / "multiomics_training_albums_individual_omics.pkl", "wb") as f:
+    pickle.dump(albums, f)
+
+# %%
+albums_list_of_arrays = [albums[o][:,1,:,:] for o in omics]
 
 # %% write album to disk
 os.makedirs(out_path, exist_ok=True)
