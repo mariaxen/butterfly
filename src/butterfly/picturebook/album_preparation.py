@@ -17,12 +17,19 @@ import seaborn as sns
 
 # data_path = pathlib.Path("/home/mgbckr/Documents/workspaces/nalab-butterfly")
 data_path = pathlib.Path("/home/mgbckr/mnt/nalab/workspaces/nalab-butterfly/data")
+out_path = data_path / "_interim/picturebook"
 
 # %% load data / CSV
 
-data_multiomics_training = pd.read_csv(data_path / "picturebook/multiomics_training.csv.gz", index_col=0, header=[0,1])
+data_multiomics_training = pd.read_csv(
+    data_path / "picturebook/multiomics_training.csv.gz", 
+    index_col=0, 
+    header=[0,1])
 data_multiomics_training.columns = pd.MultiIndex.from_tuples([
     ("meta", c[0]) if "Unnamed" in c[1] else c for c in data_multiomics_training.columns])
+
+with open(out_path / "multiomics_training.pkl", "wb") as f:
+    pickle.dump(album, f)
 
 # %% initialize regular album transformer
 # %%time
@@ -32,14 +39,13 @@ data_multiomics_training.columns = pd.MultiIndex.from_tuples([
 # %% initialize rapid AI album transformer
 %%time
 album_transformer = AlbumTransformer(64, cuml.manifold.TSNE())
-album_transformer.fit(data_multiomics_training.immune_system.values)
+album_transformer.fit(data_multiomics_training.drop(columns="meta").values)
 
 # %% transform data
-album = album_transformer.transform(data_multiomics_training.immune_system.values)
+album = album_transformer.transform(data_multiomics_training["cellfree_rna"].values)
 print(album.shape)
 
 # %% write album to disk
-out_path = data_path / "_interim/picturebook"
 os.makedirs(out_path, exist_ok=True)
 
 with open(out_path / "multiomics_training_album.pkl", "wb") as f:
@@ -47,3 +53,6 @@ with open(out_path / "multiomics_training_album.pkl", "wb") as f:
 
 # %% visualize
 sns.heatmap(album[0,1,::])
+
+
+# %%
