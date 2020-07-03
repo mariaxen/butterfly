@@ -1,5 +1,14 @@
 # Ideas
 
+## 2020-07-02
+
+-  Things to play with
+  - 
+
+
+
+## 2020-06-xx
+
 - transfer learning (on muffins :))
   - train autoencoders on t-SNE images across datasets
   - [which transfer learning to use](https://towardsdatascience.com/transfer-learning-from-pre-trained-models-f2393f124751)
@@ -21,3 +30,4 @@
 
 - methods
   - [progressive resizing of networks](https://towardsdatascience.com/boost-your-cnn-image-classifier-performance-with-progressive-resizing-in-keras-a7d96da06e20)
+

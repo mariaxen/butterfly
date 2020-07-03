@@ -98,6 +98,8 @@ class AlbumTransformer(sklearn.base.BaseEstimator, sklearn.base.TransformerMixin
 
         if self.layers is None:
             self.layers_ = [len, np.mean]
+        else:
+            self.layers_ = self.layers
 
         # fit embedding
         X_embedded = self.embedding_algorithm_fit_.fit_transform(X.T)

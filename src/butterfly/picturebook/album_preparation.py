@@ -1,6 +1,6 @@
 # %% enable auto reloading packages
-# %load_ext autoreload
-# %autoreload 2
+%load_ext autoreload
+%autoreload 2
 
 # %% imports
 import pandas as pd
@@ -12,6 +12,7 @@ import matplotlib.pyplot as plt
 import pickle
 import os
 import seaborn as sns
+import numpy as np
 
 # %% settings
 
@@ -44,17 +45,30 @@ with open(out_path / "multiomics_training.pkl", "wb") as f:
 omics = [
     'cellfree_rna', 'plasma_luminex', 'serum_luminex', 'microbiome',
     'immune_system', 'metabolomics', 'plasma_somalogic']
+
+# %%
 albums = dict()
 for o in omics:
     print(o)
-    album_transformer = AlbumTransformer(64, cuml.manifold.TSNE())
-    albums[o] = album_transformer.fit_transform(
-        data_multiomics_training[o].values)
+    album_transformer = AlbumTransformer(
+        64, 
+        cuml.manifold.UMAP(),
+        layers=[len, np.mean, np.min, np.max]
+        )
+
+    standard = sklearn.preprocessing.QuantileTransformer(output_distribution="uniform")
+    minmax = sklearn.preprocessing.MinMaxScaler()
+
+    omics_data = data_multiomics_training[o].values
+    omics_data = standard.fit_transform(omics_data)
+    # omics_data = minmax.fit_transform(omics_data)
+    # omics_data = omics_data[:, np.isnan(omics_data).sum(axis=0) == 0]
+
+    albums[o] = album_transformer.fit_transform(omics_data)
 
 # %%
-with open(out_path / "multiomics_training_albums_individual_omics.pkl", "wb") as f:
+with open(out_path / "multiomics_training_albums_individual_omics___algorithm_UMAP___scaling_quantile.pkl", "wb") as f:
     pickle.dump(albums, f)
-
 
 # %% make albums for each omic
 # %%time
@@ -64,23 +78,32 @@ omics = [
 albums = dict()
 for o in omics:
     print(o)
-    album_transformer = AlbumTransformer(64, cuml.manifold.TSNE())
+    album_transformer = AlbumTransformer(64, cuml.manifold.UMAP())
     album_transformer.fit(data_multiomics_training[o].values)
     album = album_transformer.transform(data_multiomics_training[o].values)
     albums[o] = album
 
 # %%
-with open(out_path / "multiomics_training_albums_individual_omics.pkl", "wb") as f:
+with open(out_path / "multiomics_training_albums_individual_omics___algorithm_UMAP.pkl", "wb") as f:
     pickle.dump(albums, f)
 
 # %% make one album for all omics
-album_transformer = AlbumTransformer(64, cuml.manifold.TSNE())
-album = album_transformer.fit_transform(
-    data_multiomics_training.drop(columns="meta").values)
+album_data = data_multiomics_training.drop(columns="meta").values
+album_data = sklearn.preprocessing.QuantileTransformer(output_distribution="uniform").fit_transform(album_data)
+
+# album_transformer = AlbumTransformer(64, cuml.manifold.UMAP(n_neighbors=200, min_dist=0.05))
+# album_transformer = AlbumTransformer(64, cuml.manifold.TSNE())  # breaks for this dataset
+album_transformer = AlbumTransformer(64, cuml.PCA(n_components=2))
+# album_transformer = AlbumTransformer(64, cuml.TruncatedSVD(n_components=2))
+album = album_transformer.fit_transform(album_data)
+
+fig, axes = plt.subplots(1, 2, figsize=(14, 5))
+sns.heatmap(album[10,1,:,:], ax=axes[0])
+sns.heatmap(np.log(album[10,1,:,:]), ax=axes[1])
 
 # %% write album to disk
 
-with open(out_path / "multiomics_training_album.pkl", "wb") as f:
+with open(out_path / "multiomics_training_album___algorithm_PCA.pkl", "wb") as f:
     pickle.dump(album, f)
 
 # %% visualize
