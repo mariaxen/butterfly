@@ -3,6 +3,7 @@ import numpy as np
 from scipy.spatial import ConvexHull
 import sklearn.manifold
 import tqdm
+import sklearn.preprocessing
 
 
 def Rotate2D(pts, cnt, ang=np.pi / 4):
@@ -76,11 +77,18 @@ def minimum_bounding_rectangle(points):
 
 class AlbumTransformer(sklearn.base.BaseEstimator, sklearn.base.TransformerMixin):
 
-    def __init__(self, size, embedding_algorithm=None, layers=None, store_embeddings=False):
+    def __init__(
+            self, 
+            size, 
+            embedding_algorithm=None, 
+            layers=None, 
+            store_embeddings=False,
+            dimension_scaler=None):
         self.size = size
         self.embedding_algorithm = embedding_algorithm
         self.layers = layers
         self.store_embeddings = store_embeddings
+        self.dimension_scaler = dimension_scaler
 
     def fit(self, X, y=None, groups=None):
 
@@ -114,6 +122,20 @@ class AlbumTransformer(sklearn.base.BaseEstimator, sklearn.base.TransformerMixin
         X_rotated = Rotate2D(X_embedded, np.array([bbox[2, 0], bbox[2, 1]]), angle)
         if self.store_embeddings:
             self.X_rotated_ = X_rotated
+
+        # dimension scaling
+        if self.dimension_scaler is not None:
+            if isinstance(self.dimension_scaler, str):
+                if self.dimension_scaler == "standard":
+                    self.dimension_scaler_ = sklearn.preprocessing.StandardScaler()
+                elif self.dimension_scaler == "quantile":
+                    self.dimension_scaler_ = sklearn.preprocessing.QuantileTransformer()
+                else:
+                    raise ValueError(f"Unknown dimension scaler: {self.dimension_scaler}")
+            else:
+                self.dimension_scaler_ = sklearn.base.clone(self.dimension_scaler)
+            
+            X_rotated = self.dimension_scaler_.fit_transform(X_rotated)
 
         # grid intervals
         x = np.linspace(min(X_rotated[:, 0]), max(X_rotated[:, 0]), self.size_[0] + 1)

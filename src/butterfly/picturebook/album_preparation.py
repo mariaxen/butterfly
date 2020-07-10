@@ -8,6 +8,7 @@ import pathlib
 from butterfly.deepinsight.album.album import AlbumTransformer
 import cuml.manifold
 import sklearn.manifold
+import sklearn.preprocessing
 import matplotlib.pyplot as plt
 import pickle
 import os
@@ -53,21 +54,23 @@ for o in omics:
     album_transformer = AlbumTransformer(
         64, 
         cuml.manifold.UMAP(),
-        layers=[len, np.mean, np.min, np.max]
-        )
+        layers=[len, np.mean, np.min, np.max],
+        store_embeddings=True,
+        dimension_scaler=sklearn.preprocessing.QuantileTransformer()
+    )
 
-    standard = sklearn.preprocessing.QuantileTransformer(output_distribution="uniform")
-    minmax = sklearn.preprocessing.MinMaxScaler()
+    scaler = sklearn.preprocessing.QuantileTransformer(output_distribution="uniform")
+#    minmax = sklearn.preprocessing.MinMaxScaler()
 
     omics_data = data_multiomics_training[o].values
-    omics_data = standard.fit_transform(omics_data)
+    omics_data = scaler.fit_transform(omics_data)
     # omics_data = minmax.fit_transform(omics_data)
     # omics_data = omics_data[:, np.isnan(omics_data).sum(axis=0) == 0]
 
     albums[o] = album_transformer.fit_transform(omics_data)
 
 # %%
-with open(out_path / "multiomics_training_albums_individual_omics___algorithm_UMAP___scaling_quantile.pkl", "wb") as f:
+with open(out_path / "multiomics_training_albums_individual_omics___algorithm_UMAP___scaling_quantile___dim-scaling_quantile.pkl", "wb") as f:
     pickle.dump(albums, f)
 
 # %% make albums for each omic

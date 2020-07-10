@@ -1,10 +1,21 @@
 # Ideas
 
+## 2020-07-03
+- checking pipeline
+  - talk through it
+
 ## 2020-07-02
-
--  Things to play with
-  - 
-
+Things to play with
+- Visualisations 
+  - Perplexity (or whatever for UMAP) 
+  - Something else other than Umap/TSNEs?
+- Hyperparameters of CNN
+- Data augmentation 
+- Check that it makes sense: 
+  - Our scaling  
+- Transfer learning
+- Inception layers? 
+- Try different architectures on how to combine layers
 
 
 ## 2020-06-xx
