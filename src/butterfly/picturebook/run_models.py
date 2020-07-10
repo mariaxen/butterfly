@@ -123,7 +123,7 @@ optimiser = 'adam'
 loss = 'mse'
 type_model = 'MCNN'
 type_input = "TSNE_M"
-kernel_size = 2
+kernel_size = 1
 
 _, _, prediction_test, observed_test = \
     butterfly.picturebook.NNs.NN(X, y, pixels, folds, epochs, optimiser, loss, type_model, 
@@ -140,7 +140,7 @@ scipy.stats.spearmanr(prediction_test.values, observed_test.values)
 # %%
 # with open(out_path / "multiomics_training_albums_individual_omics.pkl", "rb") as f:
 # with open(out_path / "multiomics_training_album___algorithm_PCA.pkl", "rb") as f:
-with open(out_path / "multiomics_training_album___algorithm_PCA.pkl", "rb") as f:
+with open(out_path / "multiomics_training_albums_individual_omics___algorithm_UMAP___scaling_quantile___dim-scaling_quantile.pkl", "rb") as f:
     albums = pickle.load(f)
 albums_list_of_arrays = albums[:,1,:,:]
 

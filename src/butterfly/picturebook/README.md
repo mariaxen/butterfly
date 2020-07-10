@@ -1,10 +1,23 @@
 # Ideas
 
+## 2020-07-09
+
+- interpolation of pixels in images
+
+Martin: hyperparameter optimization CNN
+Maria: transfer learning
+How to layer CNNs
+Convolution, pulling, concatenating
+Try different pulling sizes
+Different TSNE sizes and different convolution sizes (inception layers) 
+
 ## 2020-07-03
+
 - checking pipeline
   - talk through it
 
 ## 2020-07-02
+
 Things to play with
 - Visualisations 
   - Perplexity (or whatever for UMAP) 
@@ -16,7 +29,6 @@ Things to play with
 - Transfer learning
 - Inception layers? 
 - Try different architectures on how to combine layers
-
 
 ## 2020-06-xx
 
