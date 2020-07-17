@@ -2,6 +2,9 @@
 %load_ext autoreload
 %autoreload 2
 
+%env OMP_THREAD_LIMIT = 70
+%env OMP_NUM_THREADS = 70
+
 # %% imports
 import pathlib
 import pickle
@@ -11,6 +14,7 @@ import numpy as np
 import tensorflow as tf
 import seaborn as sns
 import sklearn.preprocessing
+from collections import defaultdict
 
 # %%
 # print("Num GPUs Available: ", len(tf.config.experimental.list_physical_devices('GPU')))
@@ -30,14 +34,25 @@ out_path = data_path / "_interim/picturebook"
 with open(out_path / "multiomics_training.pkl", "rb") as f:
     data_multiomics_training = pickle.load(f)
 
+omic_names = [
+    'cellfree_rna', 
+    'plasma_luminex', 
+    'serum_luminex', 
+    'microbiome',
+    'immune_system', 
+    'metabolomics', 
+    'plasma_somalogic']
+
 # %%
 data_multiomics_training
 
 # %%
 
-X = data_multiomics_training.drop(columns="meta").values
-y = data_multiomics_training.meta[["gestational_age"]].values
-groups = data_multiomics_training.meta["Gates ID"].values
+X_multi = data_multiomics_training.drop(columns="meta").values
+y_multi = data_multiomics_training.meta[["gestational_age"]].values
+groups_multi = data_multiomics_training.meta["Gates ID"].values
+
+# %%
 
 # using a standard scaler with min/max 
 # does not get rid of outliers and may break e.g., the LASSO
@@ -47,13 +62,18 @@ groups = data_multiomics_training.meta["Gates ID"].values
 # * quantile (between 0 and 1 for `uniform` output distribution)
 # * only standard scaler
 
+X = X_multi
 X = sklearn.preprocessing.StandardScaler().fit_transform(X)
 # X = sklearn.preprocessing.QuantileTransformer(output_distribution="uniform").fit_transform(X)
 # X = sklearn.preprocessing.MinMaxScaler().fit_transform(X)
 
 # scaling with quantile transformer breaks LASSO
+y = y_multi
 # y = sklearn.preprocessing.QuantileTransformer().fit_transform(y)
 
+groups = groups_multi
+
+# %%
 sns.distplot(y)
 
 # %%
@@ -123,7 +143,7 @@ optimiser = 'adam'
 loss = 'mse'
 type_model = 'MCNN'
 type_input = "TSNE_M"
-kernel_size = 1
+kernel_size = 25
 
 _, _, prediction_test, observed_test = \
     butterfly.picturebook.NNs.NN(X, y, pixels, folds, epochs, optimiser, loss, type_model, 
@@ -170,3 +190,59 @@ _, _, prediction_test, observed_test = \
 import scipy.stats
 scipy.stats.spearmanr(prediction_test.values, observed_test.values)
 
+
+
+# %%
+
+# prepare data
+
+# X
+X = [
+    sklearn.preprocessing.QuantileTransformer().fit_transform(
+        data_multiomics_training[o].values) 
+    for o in omic_names]
+
+y = data_multiomics_training.meta[["gestational_age"]].values
+groups = data_multiomics_training.meta["Gates ID"].values
+
+# %%
+
+type_model = 'AE_plaything'
+model = defaultdict(list)
+folds = 10
+scaler = False
+longitudinal = True
+
+# tf.config.threading.set_inter_op_parallelism_threads(100)
+# tf.config.threading.set_intra_op_parallelism_threads(100)
+
+model_omic = defaultdict(list)
+omics = omic_names.copy()
+
+import butterfly.picturebook.AE as AE
+prediction_train, observed_train, prediction_test, observed_test = AE.fancy(
+    omics, y, X, type_model, 
+    folds, groups, scaler, longitudinal, model_kwargs=dict(
+        bottleneck_size=2100,
+        omic_compression_size=[
+            500,  # cellfree rna
+            100,  # plasma luminex
+            100,  # serum luminex
+            500,  # microbiome
+            500,  # immune system
+            500,  # metabolomics
+            500,  # plasma somalogic
+        ]))
+
+
+# %%
+
+import scipy.stats
+scipy.stats.spearmanr(prediction_test.values, observed_test.values)
+
+
+
+# %%
+print("test")
+
+# %%

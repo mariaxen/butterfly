@@ -1,5 +1,12 @@
 # Ideas
 
+## 2020-07-16
+
+* Next steps:
+  * Create more images (multiple TNSEs and run CNN)
+  * Transfer learning
+  * Inception? (fine tuning)
+
 ## 2020-07-09
 
 - interpolation of pixels in images
