@@ -4,6 +4,8 @@ import numpy as np
 import pandas as pd
 from tensorflow.keras import Sequential
 from tensorflow.keras.layers import Dense, Flatten, Conv1D, Conv2D, MaxPooling1D, MaxPooling2D
+from tensorflow.keras import Sequential
+import tensorflow.keras.callbacks
 
 
 def NN(X, y, pixels, folds, epochs, optimiser, loss, type_model, 
@@ -77,6 +79,9 @@ def NN(X, y, pixels, folds, epochs, optimiser, loss, type_model,
             model.fit(X_train, y_train, epochs=epochs, verbose=0)
             
         elif type_model == "SimpleCNN":
+
+            callback = tensorflow.keras.callbacks.EarlyStopping(monitor='val_loss', patience=3)
+
             model = Sequential()
             model.add(
                 Conv2D(
@@ -91,8 +96,16 @@ def NN(X, y, pixels, folds, epochs, optimiser, loss, type_model,
             model.add(Dense(1, activation='linear'))
             # compile the keras model
             model.compile(loss=loss, optimizer=optimiser)
+
             # fit the keras model on the dataset
-            model.fit(X_train, y_train, epochs=epochs, batch_size=10)
+            model.fit(
+                X_train, 
+                y_train,
+                validation_split=0.2, 
+                epochs=epochs, 
+                batch_size=10, 
+                callbacks=[callback]
+            )
 
         elif type_model == 'DNN':
             
