@@ -76,8 +76,39 @@ groups = groups_multi
 # %%
 sns.distplot(y)
 
-# %%
+# %% if you want to use albums with your RF
+with open(out_path / "multiomics_training_albums_individual_omics___algorithm_UMAP___scaling_quantile___dim-scaling_quantile.pkl", "rb") as f:
+    albums = pickle.load(f)
+albums_list_of_arrays = [albums[o][:,1,:,:] for o in sorted(albums.keys())]
+# X = np.concatenate([
+#     f.reshape(f.shape[0], -1) 
+#     for f in albums_list_of_arrays], axis=1)
+X = albums_list_of_arrays
 
+
+# %%
+n_data = 10
+X = None
+for i in range(n_data):
+    path = out_path / f"multiomics_training_albums_individual_omics___algorithm_UMAP___scaling_quantile___dim-scaling_quantile___{i:02d}.pkl"
+    print(path)
+    with open(path, "rb") as f:
+        albums = pickle.load(f)
+    albums_list_of_arrays = [albums[o][:,1,:,:] for o in sorted(albums.keys())]
+    # X = np.concatenate([
+    #     f.reshape(f.shape[0], -1) 
+    #     for f in albums_list_of_arrays], axis=1)
+    
+    if X is None:
+        X = albums_list_of_arrays
+    else:
+        X = [np.concatenate([o,a], axis=0) for o, a in zip(X, albums_list_of_arrays)]
+
+y = np.tile(y.flatten(), n_data).reshape(-1,1)
+groups = np.tile(groups.flatten(), n_data).reshape(-1,1)
+
+
+# %%
 ntrees = 100
 type_model = 'Lasso'
 scaler = False
@@ -88,6 +119,24 @@ _, _, prediction_test, observed_test = \
     butterfly.picturebook.LRF.LRF(
         X, y, folds, ntrees, type_model, 
         groups, scaler,longitudinal)
+
+# %%
+scaler=False
+folds = 10
+
+pixels = 64
+epochs = 100
+optimiser = 'adam'
+loss = 'mse'
+# type_model = 'SimpleDNN'
+# type_input = 'matrix'
+type_model = 'SimpleCNN'
+type_input = 'TSNE_M'
+kernel_size = 4
+
+_, _, prediction_test, observed_test = \
+    butterfly.picturebook.NNs.NN(X, y, pixels, folds, epochs, optimiser, loss, type_model, 
+        type_input, kernel_size, groups, scaler)
 
 # %%
 import scipy.stats
@@ -141,9 +190,12 @@ pixels = 64
 epochs = 100
 optimiser = 'adam'
 loss = 'mse'
-type_model = 'MCNN'
+type_model = 'SimpleCNN'
 type_input = "TSNE_M"
 kernel_size = 25
+
+len(X)
+X[0].shape
 
 _, _, prediction_test, observed_test = \
     butterfly.picturebook.NNs.NN(X, y, pixels, folds, epochs, optimiser, loss, type_model, 
@@ -189,8 +241,6 @@ _, _, prediction_test, observed_test = \
 
 import scipy.stats
 scipy.stats.spearmanr(prediction_test.values, observed_test.values)
-
-
 
 # %%
 

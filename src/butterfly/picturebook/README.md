@@ -3,7 +3,7 @@
 ## 2020-07-16
 
 * Next steps:
-  * Create more images (multiple TNSEs and run CNN)
+  * Create more images (multiple TSNEs and run CNN)
   * Transfer learning
   * Inception? (fine tuning)
 

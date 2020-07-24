@@ -24,9 +24,14 @@ def NN(X, y, pixels, folds, epochs, optimiser, loss, type_model,
     y_observed_test = []
     
     group_kfold = model_selection.GroupKFold(n_splits=folds)
-    
+
+    #Use this for DNN
+    if (type_input == 'matrix'):
+    #    X = np.reshape(np.asarray(X), (X.shape[0], X.shape[1]))
+        X = X
+
         #Get your predictor dataset
-    if (type_input == "TSNE_S"):
+    elif (type_input == "TSNE_S"):
         #For single CNN
         X = np.asarray(X)
         dimensions = 2
@@ -71,11 +76,39 @@ def NN(X, y, pixels, folds, epochs, optimiser, loss, type_model,
 
             model.fit(X_train, y_train, epochs=epochs, verbose=0)
             
+        elif type_model == "SimpleCNN":
+            model = Sequential()
+            model.add(
+                Conv2D(
+                    filters=10,
+                    kernel_size=(kernel_size, kernel_size),
+                    activation='relu', 
+                    input_shape=(X.shape[1], X.shape[2], 7)))
+            model.add(MaxPooling2D())
+            # model.add(Dropout(0.5))
+            model.add(Flatten())
+            model.add(Dense(50, activation='relu'))
+            model.add(Dense(1, activation='linear'))
+            # compile the keras model
+            model.compile(loss=loss, optimizer=optimiser)
+            # fit the keras model on the dataset
+            model.fit(X_train, y_train, epochs=epochs, batch_size=10)
+
         elif type_model == 'DNN':
             
             model = Sequential()
             model.add(Dense(12, input_dim=X.shape[1], activation='relu'))
             model.add(Dense(8, activation='sigmoid'))
+            model.add(Dense(1, activation='linear'))
+            # compile the keras model
+            model.compile(loss=loss, optimizer=optimiser)
+            # fit the keras model on the dataset
+            model.fit(X_train, y_train, epochs=epochs, batch_size=10)
+
+        elif type_model == 'SimpleDNN':
+            
+            model = Sequential()
+            model.add(Dense(50, activation='relu'))
             model.add(Dense(1, activation='linear'))
             # compile the keras model
             model.compile(loss=loss, optimizer=optimiser)
@@ -178,7 +211,11 @@ def NN(X, y, pixels, folds, epochs, optimiser, loss, type_model,
         elif type_model == 'MCNN':
                         
             model = Sequential()
-            model.add(Conv2D(filters=64, kernel_size=(kernel_size,kernel_size), activation='relu', input_shape=(X.shape[1], X.shape[2],7)))
+            model.add(Conv2D(
+                filters=64, 
+                kernel_size=(kernel_size,kernel_size), 
+                activation='relu', 
+                input_shape=(X.shape[1], X.shape[2],7)))
             model.add(MaxPooling2D(pool_size=(2,2)))
             model.add(Flatten())
             model.add(Dense(50, activation='relu'))

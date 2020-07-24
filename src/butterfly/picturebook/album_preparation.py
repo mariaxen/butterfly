@@ -70,8 +70,34 @@ for o in omics:
     albums[o] = album_transformer.fit_transform(omics_data)
 
 # %%
-with open(out_path / "multiomics_training_albums_individual_omics___algorithm_UMAP___scaling_quantile___dim-scaling_quantile.pkl", "wb") as f:
+with open(out_path / "multiomics_training_albums_individual_omics___algorithm_UMAP___scaling_quantile___dim-scaling_quantile___05.pkl", "wb") as f:
     pickle.dump(albums, f)
+
+# %%
+for i in range(10):
+    albums = dict()
+    for o in omics:
+        print(o)
+        album_transformer = AlbumTransformer(
+            64, 
+            cuml.manifold.UMAP(),
+            layers=[len, np.mean, np.min, np.max],
+            store_embeddings=True,
+            dimension_scaler=sklearn.preprocessing.QuantileTransformer()
+        )
+
+        scaler = sklearn.preprocessing.QuantileTransformer(output_distribution="uniform")
+    #    minmax = sklearn.preprocessing.MinMaxScaler()
+
+        omics_data = data_multiomics_training[o].values
+        omics_data = scaler.fit_transform(omics_data)
+        # omics_data = minmax.fit_transform(omics_data)
+        # omics_data = omics_data[:, np.isnan(omics_data).sum(axis=0) == 0]
+
+        albums[o] = album_transformer.fit_transform(omics_data)
+
+    with open(out_path / f"multiomics_training_albums_individual_omics___algorithm_UMAP___scaling_quantile___dim-scaling_quantile___{i:02d}.pkl", "wb") as f:
+        pickle.dump(albums, f)
 
 # %% make albums for each omic
 # %%time
