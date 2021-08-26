@@ -14,7 +14,10 @@ import numpy as np
 from scipy.spatial import ConvexHull
 import scipy
 import pylab
+from sklearn.preprocessing import RobustScaler
 from sklearn.preprocessing import StandardScaler
+from sklearn.preprocessing import RobustScaler
+from sklearn.preprocessing import QuantileTransformer
 from sklearn.manifold import TSNE
 from math import atan2
 
@@ -100,9 +103,7 @@ def minimum_bounding_rectangle(points):
 
     return rval
 
-# name_of_omic = 'plasma_s'
-# pix_size = 40
-def create_album(DF, name_of_omic, pix_size):
+def create_album(DF, name_of_omic, pix_size, perplexity, scaler):
     """
    Create your album that contains all the pictures you are training on
    Each picture is one omics dataset for one patient and one trimester
@@ -119,15 +120,19 @@ def create_album(DF, name_of_omic, pix_size):
 
     # Select and prepare your chosen omics
     omic = [col for col in DF if col.startswith(name_of_omic)]
-    omic.append("patientID")
     omics_df = DF[omic]
-    omics_df = omics_df.transpose()
-    patient_IDs = omics_df.iloc[omics_df.shape[0]-1]
-    omics_df = omics_df.drop(omics_df.index[omics_df.shape[0]-1])
-    omics_df = pd.DataFrame(StandardScaler().fit_transform(omics_df))
     
+    if scaler == "Robust":    
+        omics_df = pd.DataFrame(RobustScaler().fit_transform(omics_df))
+    elif scaler == "Standard":
+        omics_df = pd.DataFrame(StandardScaler().fit_transform(omics_df))    
+    elif scaler == "QuantileT":
+        omics_df = pd.DataFrame(QuantileTransformer().fit_transform(omics_df))    
+    
+    omics_df = omics_df.transpose()
+        
     # omics_df = np.log(omics_df)
-    pca = TSNE(perplexity=25)
+    pca = TSNE(perplexity=perplexity)
     principalComponents = pca.fit_transform(omics_df)
     principalDf = pd.DataFrame(data=principalComponents,
                                columns=['principal.component.1',
@@ -201,5 +206,5 @@ def create_album(DF, name_of_omic, pix_size):
         #    pic = pic.flatten()
         album.append(pic)
 
-    return album, patient_IDs
+    return album
     # plot_im = plt.imshow(pic, cmap = 'RdGy')
